@@ -9,16 +9,20 @@ st.caption("🚀 A Streamlit chatbot powered by Anthropic Claude")
 # Sidebar for API key input and configuration
 with st.sidebar:
     anthropic_api_key = st.text_input("Anthropic API Key", key="chatbot_api_key", type="password")
-    st.write("[Get an Anthropic API key](https://www.anthropic.com/)")
-    st.write("[View the source code](https://github.com/streamlit/llm-examples/blob/main/Chatbot.py)")
-    st.write("[![Open in GitHub Codespaces](https://codespaces.badge.svg)](https://codespaces.new/streamlit/llm-examples?quickstart=1)")
     
     model = st.selectbox(
         "Select Model",
-        ["claude-3-sonnet-20240229", "claude-2", "claude-1"]
+        [
+            "claude-3-opus-20240229",
+            "claude-3-sonnet-20240229",
+            "claude-3-haiku-20240307",
+            "claude-2.1",
+            "claude-2.0",
+            "claude-instant-1.2"
+        ]
     )
-    temperature = st.slider("Select Temperature", 0.0, 1.0, 0.0)
-    max_tokens = st.number_input("Max Tokens", min_value=1, max_value=4096, value=1024)
+    temperature = st.slider("Select Temperature", 0.0, 1.0, 0.0, 0.1)
+    max_tokens = st.number_input("Max Tokens", min_value=1, max_value=4000, value=1024)
 
 # Input fields for sources and client priority
 keyword = st.text_input("Keyword (in French):")
@@ -106,7 +110,6 @@ def generate_seo_brief(keyword, sources, client_priority, model, temperature, ma
 
     # Prepare the messages for the API
     messages = [
-        {"role": "system", "content": "You are a helpful assistant."},
         {"role": "user", "content": prompt}
     ]
 
@@ -141,7 +144,7 @@ if prompt := st.chat_input():
 
     # Generate the SEO brief
     sources = [source1, source2, source3, source4, source5, source6, source7, source8]
-    seo_title, seo_meta, brief = generate_seo_brief(prompt, sources, client_priority, model, temperature, max_tokens)
+    seo_title, seo_meta, brief = generate_seo_brief(keyword, sources, client_priority, model, temperature, max_tokens)
     
     # Append the generated content to session state
     st.session_state["messages"].append({"role": "assistant", "content": f"<seotitle>{seo_title}</seotitle>\n<seometa>{seo_meta}</seometa>\n<brief>{brief}</brief>"})
