@@ -2,3 +2,4 @@ streamlit
 langchain-anthropic
 requests
 serpapi
+beautifulsoup4
