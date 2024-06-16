@@ -6,12 +6,31 @@ import os
 st.title("💬 SEO Brief Generator")
 st.caption("🚀 A Streamlit chatbot powered by Anthropic Claude")
 
-# Sidebar for API key input
+# Sidebar for API key input and configuration
 with st.sidebar:
     anthropic_api_key = st.text_input("Anthropic API Key", key="chatbot_api_key", type="password")
     st.write("[Get an Anthropic API key](https://www.anthropic.com/)")
     st.write("[View the source code](https://github.com/streamlit/llm-examples/blob/main/Chatbot.py)")
     st.write("[![Open in GitHub Codespaces](https://codespaces.badge.svg)](https://codespaces.new/streamlit/llm-examples?quickstart=1)")
+    
+    model = st.selectbox(
+        "Select Model",
+        ["claude-3-sonnet-20240229", "claude-2", "claude-1"]
+    )
+    temperature = st.slider("Select Temperature", 0.0, 1.0, 0.0)
+    max_tokens = st.number_input("Max Tokens", min_value=1, max_value=4096, value=1024)
+
+# Input fields for sources and client priority
+keyword = st.text_input("Keyword (in French):")
+source1 = st.text_area("Source 1:")
+source2 = st.text_area("Source 2:")
+source3 = st.text_area("Source 3:")
+source4 = st.text_area("Source 4:")
+source5 = st.text_area("Source 5:")
+source6 = st.text_area("Source 6:")
+source7 = st.text_area("Source 7:")
+source8 = st.text_area("Source 8:")
+client_priority = st.text_input("Client's Key Business Priority:")
 
 # Initialize session state for messages
 if "messages" not in st.session_state:
@@ -22,12 +41,12 @@ for msg in st.session_state["messages"]:
     st.chat_message(msg["role"]).write(msg["content"])
 
 # Function to generate SEO brief
-def generate_seo_brief(keyword, sources, client_priority):
+def generate_seo_brief(keyword, sources, client_priority, model, temperature, max_tokens):
     # Initialize Langchain with the Claude model from Anthropic
     llm = ChatAnthropic(
-        model="claude-3-sonnet-20240229",
-        temperature=0,
-        max_tokens=1024,
+        model=model,
+        temperature=temperature,
+        max_tokens=max_tokens,
         api_key=anthropic_api_key
     )
 
@@ -43,9 +62,30 @@ def generate_seo_brief(keyword, sources, client_priority):
     Structure the brief in markdown format, using <hn> tags to outline the sections and subsections the article should include. Under each <hn> heading, provide detailed bullet points covering the specific elements, information, and topics that section of the article should discuss.
 
     To help with researching and gathering relevant information for the brief, I will provide some sources, which may include academic articles or other pertinent articles:
-    <sources>
-    {sources}
-    </sources>
+    <source1>
+    {sources[0]}
+    </source1>
+    <source2>
+    {sources[1]}
+    </source2>
+    <source3>
+    {sources[2]}
+    </source3>
+    <source4>
+    {sources[3]}
+    </source4>
+    <source5>
+    {sources[4]}
+    </source5>
+    <source6>
+    {sources[5]}
+    </source6>
+    <source7>
+    {sources[6]}
+    </source7>
+    <source8>
+    {sources[7]}
+    </source8>
 
     Be very thorough and detailed in fleshing out the brief. I may provide additional remarks or suggestions to help improve and refine the brief.
 
@@ -61,7 +101,7 @@ def generate_seo_brief(keyword, sources, client_priority):
     {client_priority}
     </client_priority>
 
-    Provide your finished brief inside <brief> tags. Remember, the goal is to create an in-depth, well-structured outline that will guide the writer in creating a comprehensive, SEO-optimized article on the given keyword.
+    Provide your finished brief inside <brief> tags. Remember, the goal is to create an in-depth, well-structured outline that will guide the writer in creating a comprehensive, SEO-optimized article on the given keyword. Do not make any comments, just display the SEO Metas into <seotitle> <seometa> and the brief in <brief>
     """
 
     # Prepare the messages for the API
@@ -78,7 +118,16 @@ def generate_seo_brief(keyword, sources, client_priority):
     brief_end = response.content.find("</brief>")
     brief = response.content[brief_start:brief_end].strip()
 
-    return brief
+    # Extract the SEO metas from the response
+    seo_title_start = response.content.find("<seotitle>") + len("<seotitle>")
+    seo_title_end = response.content.find("</seotitle>")
+    seo_title = response.content[seo_title_start:seo_title_end].strip()
+
+    seo_meta_start = response.content.find("<seometa>") + len("<seometa>")
+    seo_meta_end = response.content.find("</seometa>")
+    seo_meta = response.content[seo_meta_start:seo_meta_end].strip()
+
+    return seo_title, seo_meta, brief
 
 # Chat input functionality
 if prompt := st.chat_input():
@@ -91,6 +140,9 @@ if prompt := st.chat_input():
     st.chat_message("user").write(prompt)
 
     # Generate the SEO brief
-    brief = generate_seo_brief(prompt, "", "")
-    st.session_state["messages"].append({"role": "assistant", "content": brief})
-    st.chat_message("assistant").write(brief)
+    sources = [source1, source2, source3, source4, source5, source6, source7, source8]
+    seo_title, seo_meta, brief = generate_seo_brief(prompt, sources, client_priority, model, temperature, max_tokens)
+    
+    # Append the generated content to session state
+    st.session_state["messages"].append({"role": "assistant", "content": f"<seotitle>{seo_title}</seotitle>\n<seometa>{seo_meta}</seometa>\n<brief>{brief}</brief>"})
+    st.chat_message("assistant").write(f"<seotitle>{seo_title}</seotitle>\n<seometa>{seo_meta}</seometa>\n<brief>{brief}</brief>")
